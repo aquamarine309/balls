@@ -211,7 +211,7 @@ class Ball {
   }
 
   get symbol() {
-    if (typeof this.symbolFn === "string") return this.symbolFn;
+    if (typeof this.symbolFn !== "function") return this.symbolFn;
     return this.symbolFn(this.value);
   }
 
@@ -759,7 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pos: { x: b.pos.x, y: b.pos.y },
         vel: { x: b.vel.x, y: b.vel.y },
         acc: { x: b.acc.x, y: b.acc.y },
-        symbolFn: b.symbolFn.name,
+        symbolFn: b.symbolFn.name || b.symbolFn,
         value: b.value.toString(), // Decimal 转字符串
         mass: b.mass,
         collisionRule: b.collisionRule
@@ -791,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
           vel: new Vector(bData.vel.x, bData.vel.y),
           acc: new Vector(bData.acc.x, bData.acc.y),
           color: bData.color,
-          symbol: bData.symbolFn.includes("format") ? window[bData.symbolFn] : bData.symbolFn,
+          symbol: bData.symbolFn?.includes?.("format") ? window[bData.symbolFn] : bData.symbolFn,
           value: new Decimal(bData.value),
           mass: bData.mass,
           collisionRule: bData.collisionRule
@@ -818,6 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshObjectsList();
       updateInfodocument();
     } catch (err) {
+      console.log(err);
       alert('导入失败：' + err.message);
     }
   };
