@@ -1,115 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=Edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>哪个小球会赢？</title>
-
+  <title>球 Battle</title>
+  
   <!-- HTML -->
-
+  
 
   <!-- Custom Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <div class="app-container">
-    <!-- 左侧画布 -->
-    <div class="canvas-area">
-      <canvas id="simCanvas" width="308" height="308"></canvas>
-    </div>
-
-    <!-- 右侧控制面板 -->
-    <div class="control-panel">
-      <!-- 全局控制按钮 -->
-      <div class="global-controls">
-        <button id="pauseBtn">⏸️ 暂停</button>
-        <button id="clearBtn">🗑️ 清除所有</button>
-        <button id="exportBtn">📤 导出场景</button>
-        <button id="importBtn">📥 导入场景</button>
-      </div>
-
-      <!-- 添加球的面板 (可折叠) -->
-      <details class="ui-section ball-config-panel" open>
-        <summary>➕ 添加新球</summary>
-        <label>颜色: <input type="color" class="config-color" value="#ff0000"></label><br>
-        <label>X 坐标: <input type="number" class="config-x" value="150" step="1"></label><br>
-        <label>Y 坐标: <input type="number" class="config-y" value="150" step="1"></label><br>
-        <label>X 速度: <input type="number" class="config-vx" value="0" step="1"></label><br>
-        <label>Y 速度: <input type="number" class="config-vy" value="0" step="1"></label><br>
-        <label>重力方向:
-          <select class="config-gravity">
-            <option value="DOWN">向下</option>
-            <option value="UP">向上</option>
-            <option value="LEFT">向左</option>
-            <option value="RIGHT">向右</option>
-            <option value="NONE">无</option>
-          </select>
-        </label><br>
-        <label>初始数值: <input type="text" class="config-value" value="1"></label><br>
-        <label>显示符号:
-          <select class="config-symbol">
-            <option value="custom">自定义</option>
-            <option value="formatNumber">数值</option>
-            <option value="formatX">×数值</option>
-            <option value="formatPow">^数值</option>
-          </select>
-        </label><br>
-        <label>
-          半径：<span class="radius">20</span><input type="range" min="5" max="50" value="20"  class="config-radius">
-        </label>
-        <label>碰撞规则:
-          <select class="config-rule">
-            <option value="none">无规则</option>
-          </select>
-        </label><br>
-        <label>质量: <input type="number" class="config-mass" value="1" step="0.1" min="0.1"></label><br>
-        <div style="margin-top:10px;">
-        <button id="addBallBtn" class="confirm-btn">✅ 确认添加球</button>
-        </div>
-      </details>
-
-      <!-- 添加约束的面板 (可折叠) -->
-      <details class="ui-section" open>
-        <summary>🔗 添加约束</summary>
-        <div class="constraint-config-form">
-          <label>类型:
-            <select id="newConstraintType">
-              <option value="spring">弹簧 (波浪线)</option>
-              <option value="rope">绳子 (虚线)</option>
-            </select>
-          </label>
-          <label>球 A:
-            <select id="newConstraintBallA"></select>
-          </label>
-          <label>球 B:
-            <select id="newConstraintBallB"></select>
-          </label>
-          <label>原长/最大长度: <input type="number" id="newConstraintLength" value="100" step="1"></label>
-          <label>刚度: <input type="number" id="newConstraintStiffness" value="10" step="1"></label>
-          <label>颜色: <input type="color" id="newConstraintColor" value="#ffffff"></label>
-          <button id="addConstraintBtn">✅ 确认添加约束</button>
-        </div>
-      </details>
-
-      <!-- 已存在物体列表 (便于删除) -->
-      <details class="ui-section">
-        <summary>📋 当前物体</summary>
-        <div id="objectsList">
-          <h4>小球</h4>
-          <ul id="ballInfoList"></ul>
-          <h4>约束</h4>
-          <ul id="constraintList"></ul>
-        </div>
-      </details>
-    </div>
+  <div class="game-container">
+    <canvas></canvas>
+    <div id="info"></div>
   </div>
-  </div>
-  <script src="break_eternity.js"></script>
   <script src="main.js"></script>
 </body>
-
 </html>
