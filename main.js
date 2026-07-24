@@ -891,7 +891,7 @@ function init() {
       v: new Vector(vx, vy)
     });
     count++
-  } while (GlobalRNG.random() < 1 / count && count < ballTypes.length);
+  } while (GlobalRNG.random() < 1 / count && ballTypes.length > 0);
   const info = document.querySelector("#info");
   info.innerHTML = Ball.all.map(x => `<span style='color: ${x.color}'>${x.name}</span>`).join(" VS ") + `<br>种子：${GlobalRNG.initialSeed}`;
 }
