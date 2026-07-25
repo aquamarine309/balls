@@ -285,7 +285,7 @@ class Particle extends Movable {
     for (const ball of Ball.all) {
       // 粒子的碰撞箱位于中心
       if (this.x.minus(ball.x).length < ball.radius) {
-        if (this.type !== "healing" && ball.type === this.ball.type) {
+        if (this.type !== "healing" && ball === this.ball) {
           return;
         }
         this.lifeTime = 0;
@@ -296,9 +296,9 @@ class Particle extends Movable {
             break;
           case "healing":
             if (ball === this.ball) {
-              ball.receiveDamage(-5);
+              ball.receiveDamage(-3);
             } else {
-              ball.receiveDamage(5);
+              ball.receiveDamage(3);
             }
             break;
           case "arrow":
@@ -315,7 +315,8 @@ class Particle extends Movable {
         const range = new AOE({
           center: this.x,
           radius: inner * 0.3,
-          lifeTime: 3
+          lifeTime: 3,
+          border: true
         }, this.ball);
       }
     }
@@ -433,7 +434,7 @@ class Ball extends Movable {
   get damageReceivedPerSecond() {
     let damage = 0;
     for (const aoe of AOE.all) {
-      if (!aoe.has(this.x) || aoe.ball.type === this.type) continue;
+      if (!aoe.has(this.x) || aoe.ball === this) continue;
       if (!aoe.isReady) continue;
       switch (aoe.type) {
         case "ice":
@@ -477,7 +478,7 @@ class Ball extends Movable {
   handleAOERestrictions() {
     for (const aoe of AOE.all) {
       if (!aoe.isReady) continue;
-      if (aoe.ball.type === this.type) continue;
+      if (aoe.ball === this) continue;
       switch (aoe.type) {
         case "trap": {
           const rel = this.x.minus(aoe.center);
@@ -502,6 +503,11 @@ class Ball extends Movable {
             }
             this.receiveDamage(1);
             this.onReflection("trap");
+            Ball.collisionHistory.push({
+              balls: [this],
+              position: aoe.center.add(rel.scaleTo(r2)),
+              time: Ball.time
+            });
           }
         }
       }
@@ -707,7 +713,7 @@ class TrapBall extends Ball {
       radius: inner * 0.15,
       lifeTime: 4.5,
       border: true,
-      readyTime: 1.2
+      readyTime: 0.6
     }, this));
     this.updateCache();
   }
@@ -826,7 +832,11 @@ function drawWDC(ball) {
     ctx.stroke();
     ctx.closePath();
   }
-  const collisions = Ball.collisionHistory.filter(x => x.balls.includes(ball) && Ball.time - x.time < ball.skillTimer);
+  const collisions = Ball.collisionHistory.filter(x => (
+      x.balls.includes(ball)
+      && Ball.time - x.time < ball.skillTimer
+      && x.balls.length === 2
+    ));
   ctx.fillStyle = "#445566";
   for (const entry of collisions) {
     const pos = entry.position;
@@ -935,7 +945,7 @@ function render() {
   ctx.fillRect(0, 0, size, size);
   requestAnimationFrame(render);
   const diff = 0.03;
-  const iter = 100;
+  const iter = 30;
   for (let i = 0; i < iter; i++) {
     Ball.tick(diff / iter);
     handleAllCollisions();
@@ -951,6 +961,7 @@ function render() {
 
 function init() {
   const ballTypes = [IceBall, HealingBall, WDCBall, RamBall, SpiderBall, TrapBall, ArcherBall];
+  const repeatable = document.querySelector("#same-ball").checked;
   let count = 0;
   do {
     const x = size * GlobalRNG.random();
@@ -959,7 +970,9 @@ function init() {
     const vy = GlobalRNG.random() - 0.5;
     const idx = Math.floor(ballTypes.length * GlobalRNG.random());
     let type = ballTypes[idx];
-    ballTypes.splice(idx, 1);
+    if (!repeatable) {
+      ballTypes.splice(idx, 1);
+    }
     new type({
       x: new Vector(x, y),
       v: new Vector(vx, vy)
