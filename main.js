@@ -96,7 +96,7 @@ class Movable {
     this.radius = 0;
     this.config = config;
     this.time = 0;
-    this.vDirection = config.v;
+    this.vDirection = config.v.scaleTo(1);
   }
   
   get v() {
@@ -271,6 +271,10 @@ class Particle extends Movable {
   
   tick(diff) {
     if (this.isDead) return;
+    if (this.type === "arrow" && this.config.target && !this.config.target.isDead) {
+      const rel = this.config.target.x.minus(this.x);
+      this.vDirection = this.vDirection.add(rel.scaleTo(diff * 3)).scaleTo(1);
+    }
     super.tick(diff);
     this.checkBall();
     this.lifeTime -= diff;
@@ -296,6 +300,9 @@ class Particle extends Movable {
             } else {
               ball.receiveDamage(5);
             }
+            break;
+          case "arrow":
+            ball.receiveDamage(1);
         }
         return;
       }
@@ -312,6 +319,22 @@ class Particle extends Movable {
         }, this.ball);
       }
     }
+  }
+  
+  draw() {
+    if (this.type !== "arrow") {
+      super.draw();
+      return;
+    }
+    const offset = 3.57;
+    const angle = Math.atan2(this.v.y, this.v.x) + offset;
+    ctx.save();
+    ctx.translate(this.x.x, this.x.y);
+    ctx.rotate(angle);
+    const img = GameImages.arrow;
+    const size = this.radius * 5;
+    ctx.drawImage(img, -size, -size, 2 * size, 2 * size);
+    ctx.restore();
   }
 }
 
@@ -370,7 +393,12 @@ class Ball extends Movable {
   }
   
   get text() {
+    if (this.isInvincible) return "∞";
     return this.life;
+  }
+  
+  get isInvincible() {
+    return false;
   }
   
   get isDead() {
@@ -409,8 +437,10 @@ class Ball extends Movable {
       if (!aoe.isReady) continue;
       switch (aoe.type) {
         case "ice":
-        case "trap":
           damage += 3;
+          break;
+        case "trap":
+          damage += 2;
       }
     }
     if (this.type !== "spider") {
@@ -439,6 +469,7 @@ class Ball extends Movable {
   }
   
   receiveDamage(damage) {
+    if (damage > 0 && this.isInvincible) return;
     this.life -= damage;
     this.recordLife();
   }
@@ -470,6 +501,7 @@ class Ball extends Movable {
               if (this.vDirection.length > 0) this.vDirection = this.vDirection.scaleTo(1);
             }
             this.receiveDamage(1);
+            this.onReflection("trap");
           }
         }
       }
@@ -591,6 +623,7 @@ class RamBall extends Ball {
   get cd() { return 10; }
   get skillTime() { return 5; }
   get name() { return "冲撞球"; }
+  get isInvincible() { return this.isSkillActive; }
   
   onSkill() {
     let nearset = null;
@@ -655,6 +688,9 @@ class TrapBall extends Ball {
   get cd() { return 4; }
   get skillTime() { return 0; }
   get name() { return "陷阱师"; }
+  get isInvincible() { return this.cachedTraps.some(x => !x.isDead && x.has(this.x)); }
+  
+  cachedTraps = [];
   
   onSkill() {
     const balls = Ball.all.filter(x => x !== this);
@@ -666,13 +702,18 @@ class TrapBall extends Ball {
       const ball = balls[idx];
       pos = ball.x;
     }
-    new AOE({
+    this.cachedTraps.push(new AOE({
       center: pos,
       radius: inner * 0.15,
       lifeTime: 4.5,
       border: true,
       readyTime: 1.2
-    }, this);
+    }, this));
+    this.updateCache();
+  }
+  
+  updateCache() {
+    this.cachedTraps = this.cachedTraps.filter(x => !x.isDead);
   }
 }
 
@@ -700,6 +741,38 @@ class SpiderBall extends Ball {
       this.webs.push([this.waiting, this.x]);
       this.waiting = null;
     }
+  }
+}
+
+class ArcherBall extends Ball {
+  get color() { return "#ff9800"; }
+  get type() { return "archer"; }
+  get name() { return "弓箭手V2"; }
+  
+  count = 0;
+  get cd() {
+    return 0.4 + Math.pow(0.97, this.count) * (this.count % 2 === 0 ? 1.5 : 0.2);
+  }
+  
+  onSkill() {
+    this.count++;
+    let nearset = null;
+    let min = Infinity;
+    for (const ball of Ball.all) {
+      if (ball === this) continue;
+      const distance = ball.x.minus(this.x).length;
+      if (distance < min) {
+        nearset = ball;
+        min = distance;
+      }
+    }
+    new Particle({
+      type: "arrow",
+      x: this.x.add(this.v.scaleTo(this.radius)),
+      v: nearset ? nearset.x.minus(this.x) : this.v,
+      maxCollision: 0,
+      target: nearset
+    }, this);
   }
 }
 
@@ -876,7 +949,7 @@ function render() {
 }
 
 function init() {
-  const ballTypes = [IceBall, HealingBall, WDCBall, RamBall, SpiderBall, TrapBall];
+  const ballTypes = [IceBall, HealingBall, WDCBall, RamBall, SpiderBall, TrapBall, ArcherBall];
   let count = 0;
   do {
     const x = size * GlobalRNG.random();
@@ -893,8 +966,51 @@ function init() {
     count++
   } while (GlobalRNG.random() < 1 / count && ballTypes.length > 0);
   const info = document.querySelector("#info");
-  info.innerHTML = Ball.all.map(x => `<span style='color: ${x.color}'>${x.name}</span>`).join(" VS ") + `<br>种子：${GlobalRNG.initialSeed}`;
+  info.innerHTML = Ball.all.map(x => `<span style='color: ${x.color}'>${x.name}</span>`).join(" VS ") + `<br>当前种子：${GlobalRNG.initialSeed}`;
 }
 
 init();
-render();
+
+function loadImages(fileNames, callback) {
+  const images = {};
+  let loadedCount = 0;
+  const totalCount = fileNames.length;
+
+  for (const name of fileNames) {
+    const path = `./${name}.png`;
+    const img = new Image();
+    img.src = path;
+    images[name] = img;
+    img.onload = function() {
+      loadedCount++;
+      if (loadedCount === totalCount) {
+        callback(images);
+      }
+    }
+  }
+  return images;
+}
+
+const GameImages = loadImages(["arrow"], () => {
+  render();
+  document.querySelector("#loading").remove();
+});
+
+function setToSeed(seed) {
+  if (seed === 0 || Math.abs(seed) > 9e15) return;
+  GlobalRNG.initialSeed = seed;
+  GlobalRNG.seed = seed;
+  Ball.all = [];
+  Particle.all = [];
+  AOE.all = [];
+  init();
+}
+
+document.querySelector("#load-seed").addEventListener("click", function() {
+  const input = parseInt(document.querySelector("#seed-input").value);
+  setToSeed(input);
+});
+
+document.querySelector("#random-generate").addEventListener("click", function() {
+  setToSeed(Math.floor(Math.random() * Date.now()) + 1);
+});
