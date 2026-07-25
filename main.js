@@ -358,13 +358,15 @@ class Ball extends Movable {
   constructor(config) {
     super(config);
     this.life = config.life || 100;
-    this.radius = inner * 0.05;
+    this.initialLife = this.life;
+    this.radius = config.radius || inner * 0.05;
     this.cdTimer = 0;
     this.skillTimer = -1;
     Ball.all.push(this);
     this.lifeHistory = [];
-    this.lastRecorded = 100;
+    this.lastRecorded = this.life;
     this.effects = new Map();
+    this.tag = config.tag || Math.random();
   }
   
   get velocityMult() {
@@ -442,6 +444,9 @@ class Ball extends Movable {
           break;
         case "trap":
           damage += 2;
+          break;
+        case "division":
+          if (this.tag !== aoe.ball.tag) damage += 4;
       }
     }
     const webs = Ball.all.filter(x => x.type === "spider" && x !== this).reduce((a, x) => a.concat(x.fullLasers), []);
@@ -465,6 +470,10 @@ class Ball extends Movable {
       }
     }
     return damage;
+  }
+  
+  get mass() {
+    return this.radius / (inner * 0.05);
   }
   
   receiveDamage(damage) {
@@ -781,6 +790,43 @@ class ArcherBall extends Ball {
   }
 }
 
+class DivisionBall extends Ball {
+  get color() { return "#E57BC6"; }
+  get type() { return "division"; }
+  get name() { return "分裂球"; }
+  get cd() { return 10; }
+  
+  onSkill() {
+    if (this.life < 5) return;
+    if (Ball.all.every(x => x.tag === this.tag)) {
+      Ball.all = [Ball.all[0]];
+      return;
+    };
+    const x = size * GlobalRNG.random();
+    const y = size * GlobalRNG.random();
+    new DivisionBall({
+      x: new Vector(x, y),
+      v: this.v,
+      life: Math.floor(this.life * 0.33),
+      radius: this.radius / 2,
+      tag: this.tag
+    });
+  }
+  
+  onCollision() {
+    this.receiveDamage(1);
+  }
+  
+  onDead() {
+    new AOE({
+      center: this.x,
+      radius: inner * 0.2,
+      border: true,
+      lifeTime: 5
+    }, this)
+  }
+}
+
 function drawBackground() {
   for (const ball of Ball.all) {
     switch (ball.type) {
@@ -958,8 +1004,9 @@ function render() {
 }
 
 function init() {
-  const ballTypes = [IceBall, HealingBall, WDCBall, RamBall, SpiderBall, TrapBall, ArcherBall];
+  const ballTypes = [IceBall, HealingBall, WDCBall, RamBall, SpiderBall, TrapBall, ArcherBall, DivisionBall];
   const repeatable = document.querySelector("#same-ball").checked;
+  const notFixed = document.querySelector("#ball-size").checked;
   let count = 0;
   do {
     const x = size * GlobalRNG.random();
@@ -973,7 +1020,8 @@ function init() {
     }
     new type({
       x: new Vector(x, y),
-      v: new Vector(vx, vy)
+      v: new Vector(vx, vy),
+      radius: inner * 0.05 * (notFixed ? 0.5 + GlobalRNG.random() : 1)
     });
     count++
   } while (GlobalRNG.random() < 1 / count && ballTypes.length > 0);
