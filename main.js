@@ -481,8 +481,6 @@ class Ball extends Movable {
         case "trap":
           damage += 2;
           break;
-        case "division":
-          if (this.tag !== aoe.ball.tag) damage += 4;
       }
     }
     for (const ball of Ball.all) {
@@ -502,8 +500,8 @@ class Ball extends Movable {
         if (delta < 0) continue;
         const t1 = (-b + Math.sqrt(delta)) / (2 * a);
         const t2 = (-b - Math.sqrt(delta)) / (2 * a);
-        if ((t1 > 0 && t1 < 1) || (t2 > 0 && t2 < 1)) {
-          damage++;
+        if ((t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1)) {
+          damage += 0.75;
         }
       }
     }
@@ -846,23 +844,14 @@ class DivisionBall extends Ball {
     new DivisionBall({
       x: new Vector(x, y),
       v: this.v,
-      life: Math.floor(this.life * 0.33),
-      radius: this.radius / 2,
+      life: Math.floor(this.life * 0.4),
+      radius: this.radius * 0.7,
       tag: this.tag
     });
   }
   
-  onCollision() {
-    this.receiveDamage(1);
-  }
-  
-  onDead() {
-    new AOE({
-      center: this.x,
-      radius: inner * 0.2,
-      border: true,
-      lifeTime: 5
-    }, this)
+  onCollision(ball) {
+    if (ball.tag !== this.tag) ball.receiveDamage(1);
   }
 }
 
