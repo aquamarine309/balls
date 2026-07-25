@@ -248,6 +248,8 @@ class Particle extends Movable {
     this.type = config.type;
     this.ball = ball;
     Particle.all.push(this);
+    this.history = [];
+    this.historyTick = 0;
   }
   
   get color() {
@@ -276,6 +278,12 @@ class Particle extends Movable {
       this.vDirection = this.vDirection.add(rel.scaleTo(diff * 3)).scaleTo(1);
     }
     super.tick(diff);
+    this.historyTick++;
+    if (this.historyTick >= 5) {
+      this.history.push(this.x);
+      if (this.history.length >= 60) this.history.shift();
+      this.historyTick = 0;
+    }
     this.checkBall();
     this.lifeTime -= diff;
     if (this.isDead) this.onDead();
@@ -325,6 +333,7 @@ class Particle extends Movable {
   draw() {
     if (this.type !== "arrow") {
       super.draw();
+      this.drawTrail();
       return;
     }
     const offset = 3.57;
@@ -336,6 +345,30 @@ class Particle extends Movable {
     const size = this.radius * 5;
     ctx.drawImage(img, -size, -size, 2 * size, 2 * size);
     ctx.restore();
+  }
+  
+  drawTrail() {
+    if (this.history.length < 2) return;
+
+    const head = this.history[this.history.length - 1];
+    const tail = this.history[0];
+
+    const grad = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
+    
+    grad.addColorStop(0, 'rgb(0, 0, 0, 0)'); 
+    grad.addColorStop(1, this.color); 
+
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(this.history[0].x, this.history[0].y);
+    for (let i = 1; i < this.history.length; i++) {
+      ctx.lineTo(this.history[i].x, this.history[i].y);
+    }
+    ctx.stroke();
   }
 }
 
@@ -367,6 +400,8 @@ class Ball extends Movable {
     this.lastRecorded = this.life;
     this.effects = new Map();
     this.tag = config.tag || Math.random();
+    this.partDamage = 0;
+    this.passiveDamageTimer = 0;
   }
   
   get velocityMult() {
@@ -427,6 +462,7 @@ class Ball extends Movable {
   }
   
   applyEffect(effect, duration) {
+    if (this.isInvincible) return;
     this.effects.set(effect, new Timer(
       this.time,
       duration
@@ -449,24 +485,26 @@ class Ball extends Movable {
           if (this.tag !== aoe.ball.tag) damage += 4;
       }
     }
-    const webs = Ball.all.filter(x => x.type === "spider" && x !== this).reduce((a, x) => a.concat(x.fullLasers), []);
-    for (const web of webs) {
-      const x1 = web[0].x;
-      const y1 = web[0].y;
-      const x2 = web[1].x;
-      const y2 = web[1].y;
-      const cx = this.x.x;
-      const cy = this.x.y;
-      const r = this.radius;
-      const a = (x2 - x1) ** 2 + (y2 - y1) ** 2;
-     const b = 2 * ((x2 - x1) * (x1 - cx) + (y2 - y1) * (y1 - cy));
-     const c = (x1 - cx) ** 2 + (y1 - cy) ** 2 - r ** 2;
-      const delta = b * b - 4 * a * c;
-      if (delta < 0) continue;
-      const t1 = (-b + Math.sqrt(delta)) / (2 * a);
-      const t2 = (-b - Math.sqrt(delta)) / (2 * a);
-      if ((t1 > 0 && t1 < 1) || (t2 > 0 && t2 < 1)) {
-        damage++;
+    for (const ball of Ball.all) {
+      if (ball.type !== "spider" || ball === this) continue;
+      for (const web of ball.webs) {
+        const x1 = web.x;
+        const y1 = web.y;
+        const x2 = ball.x.x;
+        const y2 = ball.x.y;
+        const cx = this.x.x;
+        const cy = this.x.y;
+        const r = this.radius;
+        const a = (x2 - x1) ** 2 + (y2 - y1) ** 2;
+       const b = 2 * ((x2 - x1) * (x1 - cx) + (y2 - y1) * (y1 - cy));
+       const c = (x1 - cx) ** 2 + (y1 - cy) ** 2 - r ** 2;
+        const delta = b * b - 4 * a * c;
+        if (delta < 0) continue;
+        const t1 = (-b + Math.sqrt(delta)) / (2 * a);
+        const t2 = (-b - Math.sqrt(delta)) / (2 * a);
+        if ((t1 > 0 && t1 < 1) || (t2 > 0 && t2 < 1)) {
+          damage++;
+        }
       }
     }
     return damage;
@@ -539,8 +577,8 @@ class Ball extends Movable {
   
   tick(diff) {
     if (this.isDead) return;
-    const timeBefore = this.time;
     super.tick(diff);
+    this.passiveDamageTimer += diff;
     this.handleAOERestrictions();
     if (this.isSkillActive) { 
       this.skillTimer += diff;
@@ -557,9 +595,15 @@ class Ball extends Movable {
       this.onSkill();
       this.skillTimer = 0;
     }
-    if (Math.floor(this.time) > Math.floor(timeBefore)) {
-      this.life -= this.damageReceivedPerSecond;
-      this.recordLife();
+    const dps = this.damageReceivedPerSecond;
+    if (!this.isInvincible) {
+      this.partDamage += dps * diff;
+    }
+    const floor = Math.floor(this.partDamage);
+    if (floor > 0 && this.passiveDamageTimer > 1) {
+      this.passiveDamageTimer = 0;
+      this.receiveDamage(floor);
+      this.partDamage -= floor;
     }
     this.lifeHistory = this.lifeHistory.filter(entry => entry.time >= this.time - 5);
   }
@@ -738,21 +782,16 @@ class SpiderBall extends Ball {
   waiting = null;
   webs = [];
   
-  get fullLasers() {
-    if (this.waiting === null) return this.webs;
-    return [...this.webs, [this.waiting, this.x]];
-  }
-  
   onDead() {
     this.webs = [];
   }
   
-  onReflection() {
-    if (this.waiting === null) {
-      this.waiting = this.x;
-    } else {
-      this.webs.push([this.waiting, this.x]);
-      this.waiting = null;
+  onReflection(direction) {
+    if (direction === "trap") return;
+    this.webs.push(this.x);
+    const threshold = 30;
+    if (this.webs.length > threshold) {
+      this.webs.shift();
     }
   }
 }
@@ -906,19 +945,15 @@ function drawWDC(ball) {
 function drawSpider(ball) {
   ctx.lineWidth = 2;
   ctx.strokeStyle = ball.color;
-  const nodes = [];
-  for (const web of ball.fullLasers) {
+  ctx.fillStyle = "#999999";
+  for (const web of ball.webs) {
     ctx.beginPath();
-    ctx.moveTo(web[0].x, web[0].y);
-    ctx.lineTo(web[1].x, web[1].y);
+    ctx.moveTo(ball.x.x, ball.x.y);
+    ctx.lineTo(web.x, web.y);
     ctx.stroke();
     ctx.closePath();
-    nodes.push(...web);
-  }
-  ctx.fillStyle = "#999999";
-  for (const node of nodes) {
     ctx.beginPath();
-    ctx.arc(node.x, node.y, 3, 0, Math.PI * 2);
+    ctx.arc(web.x, web.y, 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.closePath();
   }
