@@ -766,10 +766,11 @@ class ArcherBall extends Ball {
         min = distance;
       }
     }
+    const direction = nearset ? nearset.x.minus(this.x) : this.v;
     new Particle({
       type: "arrow",
-      x: this.x.add(this.v.scaleTo(this.radius)),
-      v: nearset ? nearset.x.minus(this.x) : this.v,
+      x: this.x.add(direction.scaleTo(this.radius)),
+      v: direction,
       maxCollision: 0,
       target: nearset
     }, this);
