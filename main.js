@@ -444,26 +444,24 @@ class Ball extends Movable {
           damage += 2;
       }
     }
-    if (this.type !== "spider") {
-      const webs = Ball.all.filter(x => x.type === "spider").reduce((a, x) => a.concat(x.fullLasers), []);
-      for (const web of webs) {
-        const x1 = web[0].x;
-        const y1 = web[0].y;
-        const x2 = web[1].x;
-        const y2 = web[1].y;
-        const cx = this.x.x;
-        const cy = this.x.y;
-        const r = this.radius;
-        const a = (x2 - x1) ** 2 + (y2 - y1) ** 2;
-        const b = 2 * ((x2 - x1) * (x1 - cx) + (y2 - y1) * (y1 - cy));
-        const c = (x1 - cx) ** 2 + (y1 - cy) ** 2 - r ** 2;
-        const delta = b * b - 4 * a * c;
-        if (delta < 0) continue;
-        const t1 = (-b + Math.sqrt(delta)) / (2 * a);
-        const t2 = (-b - Math.sqrt(delta)) / (2 * a);
-        if ((t1 > 0 && t1 < 1) || (t2 > 0 && t2 < 1)) {
-          damage++;
-        }
+    const webs = Ball.all.filter(x => x.type === "spider" && x !== this).reduce((a, x) => a.concat(x.fullLasers), []);
+    for (const web of webs) {
+      const x1 = web[0].x;
+      const y1 = web[0].y;
+      const x2 = web[1].x;
+      const y2 = web[1].y;
+      const cx = this.x.x;
+      const cy = this.x.y;
+      const r = this.radius;
+      const a = (x2 - x1) ** 2 + (y2 - y1) ** 2;
+     const b = 2 * ((x2 - x1) * (x1 - cx) + (y2 - y1) * (y1 - cy));
+     const c = (x1 - cx) ** 2 + (y1 - cy) ** 2 - r ** 2;
+      const delta = b * b - 4 * a * c;
+      if (delta < 0) continue;
+      const t1 = (-b + Math.sqrt(delta)) / (2 * a);
+      const t2 = (-b - Math.sqrt(delta)) / (2 * a);
+      if ((t1 > 0 && t1 < 1) || (t2 > 0 && t2 < 1)) {
+        damage++;
       }
     }
     return damage;
@@ -1022,6 +1020,7 @@ function setToSeed(seed) {
 
 document.querySelector("#load-seed").addEventListener("click", function() {
   const input = parseInt(document.querySelector("#seed-input").value);
+  if (Number.isNaN(input)) return;
   setToSeed(input);
 });
 
