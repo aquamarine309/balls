@@ -15,8 +15,8 @@ function drawBorder() {
   ctx.closePath();
 }
 
-const BALL_VELOCITY = 0.4 * inner;
-const PARTICLE_VELOCITY = 0.6 * inner;
+const BALL_VELOCITY = 0.8 * inner;
+const PARTICLE_VELOCITY = inner;
 
 const GlobalRNG = {
   initialSeed: Math.floor(Date.now() * Math.random()) + 1,
@@ -832,11 +832,16 @@ class DivisionBall extends Ball {
   get type() { return "division"; }
   get name() { return "分裂球"; }
   get cd() { return 10; }
+  get maxTimes() { return Math.floor(this.initialLife / 25) + 1; }
+  
+  count = 0;
   
   onSkill() {
+    if (this.count >= this.maxTimes) return;
     if (this.life < 5) return;
+    this.count++;
     if (Ball.all.every(x => x.tag === this.tag)) {
-      Ball.all = [Ball.all[0]];
+      Ball.all = [Ball.all.reduce((a, b) => a.life > b.life ? a : b)];
       return;
     };
     const x = size * GlobalRNG.random();
@@ -844,7 +849,7 @@ class DivisionBall extends Ball {
     new DivisionBall({
       x: new Vector(x, y),
       v: this.v,
-      life: Math.floor(this.life * 0.4),
+      life: Math.floor(this.life * 0.5),
       radius: this.radius * 0.7,
       tag: this.tag
     });
@@ -853,6 +858,13 @@ class DivisionBall extends Ball {
   onCollision(ball) {
     if (ball.tag !== this.tag) ball.receiveDamage(1);
   }
+}
+
+class KarabiBall extends Ball {
+  get color() { return "#4F8EFA"; }
+  get type() { return "karabi"; }
+  get name() { return "卡拉比"; }
+  get cd() { return 6; }
 }
 
 function drawBackground() {
@@ -1007,18 +1019,28 @@ function handleCollision(a, b, first) {
   return true;
 }
 
+let lastUpdate;
+let remainingTime = 0;
 function render() {
+  requestAnimationFrame(render);
+  if (!lastUpdate) {
+    lastUpdate = Date.now();
+    return;
+  }
+  const timeDiff = Date.now() - lastUpdate;
+  lastUpdate += timeDiff;
   ctx.clearRect(0, 0, size, size);
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, size, size);
-  requestAnimationFrame(render);
-  const diff = 0.03;
-  const iter = 30;
+  const part = 0.03 / 30;
+  const diff = timeDiff / 1000 + remainingTime;
+  const iter = Math.floor(diff / part);
+  remainingTime = diff - part * iter;
   for (let i = 0; i < iter; i++) {
-    Ball.tick(diff / iter);
+    Ball.tick(part);
     handleAllCollisions();
-    Particle.tick(diff / iter);
-    AOE.tick(diff / iter);
+    Particle.tick(part);
+    AOE.tick(part);
   }
   drawBackground();
   Particle.draw();
