@@ -1,5 +1,6 @@
 import { Ball } from "./ball.js";
 import { Particle } from "../particle.js";
+import { inner } from "../layout.js";
 
 export class MageBall extends Ball {
   get color() { return "#fe8093"; }
@@ -15,7 +16,8 @@ export class MageBall extends Ball {
       effect: ["fire", "ice", "health"][this.count % 3],
       x: this.x.add(this.vDirection.scaleTo(this.radius * 2)),
       v: this.vDirection.rotate(),
-      maxCollision: 0
+      maxCollision: 0,
+      radius: inner * 0.012
     }, this);
     this.count++;
   }

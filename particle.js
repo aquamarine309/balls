@@ -26,7 +26,7 @@ export class Particle extends Movable {
     super(config);
     this.lifeTime = config.lifeTime ?? Infinity;
     this.maxCollision = config.maxCollision ?? Infinity;
-    this.radius = inner * 0.01;
+    this.radius = config.radius ?? inner * 0.01;
     this.type = config.type;
     this.ball = ball;
     Particle.all.push(this);
@@ -63,24 +63,33 @@ export class Particle extends Movable {
     return this.lifeTime <= 0;
   }
   
+  trace(pos, diff, acc = 3) {
+    const rel = pos.minus(this.x);
+    this.vDirection = this.vDirection.scaleTo(1);
+    this.vDirection = this.vDirection.add(rel.scaleTo(diff * acc)).scaleTo(1);
+  }
+  
   tick(diff) {
     if (this.isDead) return;
     if (this.type === "arrow" && this.config.target && !this.config.target.isDead) {
-      const rel = this.config.target.x.minus(this.x);
-      this.vDirection = this.vDirection.scaleTo(1);
-      this.vDirection = this.vDirection.add(rel.scaleTo(diff * 3)).scaleTo(1);
+      this.trace(this.config.target.x, diff);
     }
     if (this.type === "magicball" && !this.ball.isDead) {
-      const rel = this.ball.x.minus(this.x);
-      const dis = rel.length;
-      const v = this.v.length;
-      this.vDirection = this.vDirection.scaleTo(v);
-      const a = v * v / dis;
-      const r = this.ball.radius * 2;
-      this.vDirection = this.vDirection
-        .add(this.vDirection.rotate().scaleTo(a * diff))
-        .add(rel.scaleTo((dis - r) * 0.05))
-        .scaleTo(1);
+      if (this.time < 2) {
+        const rel = this.ball.x.minus(this.x);
+        const dis = rel.length;
+        const v = this.v.length;
+        this.vDirection = this.vDirection.scaleTo(v);
+        const a = 0.8 * v * v / dis; // 稀释
+        const r = this.ball.radius * 2;
+        this.vDirection = this.vDirection
+          .add(this.vDirection.rotate().scaleTo(a * diff))
+          .add(rel.scaleTo((dis - r) * 0.05))
+          .scaleTo(1);
+      } else {
+        const other = Ball.all.find(x => x !== this.ball);
+        if (other) this.trace(other.x, diff, 10);
+      }
     }
     super.tick(diff);
     this.historyTick++;
@@ -139,12 +148,12 @@ export class Particle extends Movable {
             switch (this.config.effect) {
               case "fire":
                 if (ball !== this.ball) {
-                    ball.receiveDamage(2);
+                    ball.receiveDamage(3);
                 }
                 break;
               case "ice":
                 if (ball !== this.ball) {
-                    ball.applyEffect("ice", 1);
+                    ball.applyEffect("ice", 2);
                 }
                 break;
               case "health":
@@ -205,7 +214,7 @@ export class Particle extends Movable {
     grad.addColorStop(1, this.color); 
 
     ctx.strokeStyle = grad;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = this.radius / 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
