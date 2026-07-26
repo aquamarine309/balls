@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>球 Battle</title>
+  
+  <!-- HTML -->
+  
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="game-container">
+    <canvas></canvas>
+    <div class="options">
+      <div class="options">
+        <div id="info"></div>
+        <div id="loading">图片正在加载，请稍等</div>
+        <div class="row">
+          <input type="number" placeholder="修改种子" id="seed-input"><button id="load-seed">加载</button><button id="random-generate">随机生成</button>
+        </div>
+      </div>
+      <hr>
+      <h2>设置</h2>
+      <div class="options">
+        <div class="row"><input type="checkbox" name="same-ball" id="same-ball"><label for="same-ball">允许相同的球</label></div>
+        <div class="row"><input type="checkbox" name="ball-size" id="ball-size"><label for="ball-size">大小不固定</label></div>
+      </div>
+    </div>
+  </div>
+  <script src="main.js" type="module"></script>
+</body>
+</html>
