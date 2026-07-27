@@ -6,6 +6,7 @@ import { TrapBall } from "./trap-ball.js";
 import { SpiderBall } from "./spider-ball.js";
 import { ArcherBall } from "./archer-ball.js";
 import { MageBall } from "./mage-ball.js";
+import { ChessBall } from "./chess-ball.js";
 
 export const Balls = [
   HealingBall,
@@ -15,5 +16,6 @@ export const Balls = [
   TrapBall,
   SpiderBall,
   MageBall,
-  ArcherBall
+  ArcherBall,
+  ChessBall
 ];

@@ -21,9 +21,11 @@ export class Movable {
     return "";
   }
 
-  tick(deltaTime) {
+  tick(deltaTime, fixed = false) {
     this.time += deltaTime;
-    this.x = this.x.add(this.v.times(deltaTime));
+    if (!fixed) {
+      this.x = this.x.add(this.v.times(deltaTime));
+    }
     if (this.x.x - this.radius < border) {
       this.x.x = (border + this.radius) * 2 - this.x.x;
       this.vDirection.x = -this.vDirection.x;

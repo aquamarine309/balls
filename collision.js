@@ -18,7 +18,26 @@ export function handleAllCollisions() {
   }
 }
 
+function adjustPosition(a, b) {
+  const r = a.x.minus(b.x);
+  const dist = r.length;
+  const minDist = a.radius + b.radius + 4;
+
+  if (dist >= minDist || dist === 0) return false;
+  const n = r.scaleTo(1);
+
+  const overlap = minDist - dist;
+  const pushA = n.times(overlap * 0.5);
+  const pushB = n.times(-overlap * 0.5);
+  a.x = a.x.add(pushA);
+  b.x = b.x.add(pushB);
+
+  return true;
+}
+
 function handleCollision(a, b, first) {
+  adjustPosition(a, b);
+  if (!a.canCollide || !b.canCollide) return false;
   const r = a.x.minus(b.x);
   const dist = r.length;
   const minDist = a.radius + b.radius + 4;
@@ -39,14 +58,12 @@ function handleCollision(a, b, first) {
     b.vDirection = b.vDirection.add(n.times(impulse * massA)).scaleTo(1);
   }
 
-  const overlap = minDist - dist;
-  const pushA = n.times(overlap * 0.5);
-  const pushB = n.times(-overlap * 0.5);
-  a.x = a.x.add(pushA);
-  b.x = b.x.add(pushB);
+  adjustPosition(a, b);
 
   if (first) {
     const position = a.x.add(b.x).times(0.5);
+    a.lastCollision = a.time;
+    b.lastCollision = b.time;
     a.onCollision(b, position);
     b.onCollision(a, position);
     Ball.collisionHistory.push({

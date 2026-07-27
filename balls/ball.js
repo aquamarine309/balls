@@ -37,6 +37,11 @@ export class Ball extends Movable {
     this.partDamage = 0;
     this.passiveDamageTimer = 0;
     this.lifeTime = config.lifeTime || Infinity;
+    this.lastCollision = 0;
+  }
+  
+  get canCollide() {
+    return this.time - this.lastCollision > 0.3;
   }
   
   get velocityMult() {

@@ -1,8 +1,9 @@
 import { Movable } from "./movable.js";
 import { AOE } from "./aoe.js";
 import { Ball } from "./balls/ball.js";
-import { inner, ctx } from "./layout.js";
+import { size, inner, ctx } from "./layout.js";
 import { GameImages } from "./main.js";
+import { Vector } from "./vector.js";
 
 const PARTICLE_VELOCITY = inner;
 
@@ -30,6 +31,7 @@ export class Particle extends Movable {
     this.type = config.type;
     this.ball = ball;
     Particle.all.push(this);
+    this.hasTrail = config.hasTrail ?? true;
     this.history = [];
     this.historyTick = 0;
   }
@@ -40,9 +42,9 @@ export class Particle extends Movable {
         case "fire":
           return "#ff6365";
         case "ice":
-          return "#a0a3ef";
+          return "#6365ff";
         case "health":
-          return "#65ee44";
+          return "#63ff65";
       }
     }
     return this.ball.color;
@@ -72,31 +74,31 @@ export class Particle extends Movable {
   tick(diff) {
     if (this.isDead) return;
     if (this.type === "arrow" && this.config.target && !this.config.target.isDead) {
-      this.trace(this.config.target.x, diff);
+      this.trace(this.config.target.x, diff, 5);
     }
-    if (this.type === "magicball" && !this.ball.isDead) {
-      if (this.time < 2) {
-        const rel = this.ball.x.minus(this.x);
-        const dis = rel.length;
-        const v = this.v.length;
-        this.vDirection = this.vDirection.scaleTo(v);
-        const a = 0.8 * v * v / dis; // 稀释
-        const r = this.ball.radius * 2;
-        this.vDirection = this.vDirection
-          .add(this.vDirection.rotate().scaleTo(a * diff))
-          .add(rel.scaleTo((dis - r) * 0.05))
-          .scaleTo(1);
+    const isMagic = this.type === "magicball" && !this.ball.isDead;
+    const shortTime = this.time < 1.5;
+    if (isMagic) {
+      if (shortTime) {
+        const r = this.ball.radius * 3;
+        const angle = (this.time * 3) % (2 * Math.PI);
+        this.x = this.ball.x.add(new Vector(r * Math.cos(angle), r * Math.sin(angle)));
       } else {
-        const other = Ball.all.find(x => x !== this.ball);
-        if (other) this.trace(other.x, diff, 10);
+        const balls = Ball.all.filter(x => x !== this.ball);
+        if (balls.length > 0) {
+          const maxHP = balls.reduce((a, b) => (a.life > b.life) ? a : b);
+          this.trace(maxHP.x, diff, 6);
+        }
       }
     }
-    super.tick(diff);
-    this.historyTick++;
-    if (this.historyTick >= 5) {
-      this.history.push(this.x);
-      if (this.history.length >= 60) this.history.shift();
-      this.historyTick = 0;
+    super.tick(diff, isMagic && shortTime);
+    if (this.hasTrail) {
+      this.historyTick++;
+      if (this.historyTick >= 5) {
+        this.history.push(this.x);
+        if (this.history.length >= 60) this.history.shift();
+        this.historyTick = 0;
+      }
     }
     this.checkBall();
     this.checkAOE();
@@ -145,21 +147,17 @@ export class Particle extends Movable {
             ball.receiveDamage(1);
             break;
           case "magicball":
+            if (this.ball === ball) break;
             switch (this.config.effect) {
               case "fire":
-                if (ball !== this.ball) {
-                    ball.receiveDamage(3);
-                }
+                ball.receiveDamage(2);
                 break;
               case "ice":
-                if (ball !== this.ball) {
-                    ball.applyEffect("ice", 2);
-                }
+                ball.applyEffect("ice", 1);
                 break;
               case "health":
-                if (ball === this.ball) {
-                  ball.receiveDamage(-1);
-                }
+                ball.receiveDamage(1);
+                this.ball.receiveDamage(-1);
             }
         }
         return;
@@ -203,6 +201,7 @@ export class Particle extends Movable {
   }
   
   drawTrail() {
+    if  (!this.hasTrail) return;
     if (this.history.length < 2) return;
 
     const head = this.history[this.history.length - 1];

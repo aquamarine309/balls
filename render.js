@@ -25,6 +25,8 @@ function drawBackground() {
       case "spider":
         drawSpider(ball);
         break;
+      case "chess":
+        drawChess(ball);
     }
   }
   ctx.fillStyle = "#7BC0FD";
@@ -115,6 +117,48 @@ function drawSpider(ball) {
     ctx.beginPath();
     ctx.arc(web.x, web.y, 3, 0, Math.PI * 2);
     ctx.fill();
+    ctx.closePath();
+  }
+}
+
+function drawChess(ball) {
+  if (!ball.isSkillActive) return;
+  const rate = ball.skillTimer / ball.skillTime;
+  let prog = 1;
+  const animation = 0.1;
+  if (rate < animation) {
+    prog = rate / animation;
+  } else if (rate > 1 - animation) {
+    prog = (1 - rate) / animation;
+  }
+  ctx.fillStyle = "black";
+  ctx.fillRect(border, border, inner, inner);
+  ctx.globalAlpha = prog * 0.7;
+  for (let i = 0; i < 5; i++) {
+    for (let j = 0; j < 5; j++) {
+      ctx.beginPath();
+      ctx.fillStyle = (i + j) % 2 === 0 ? "#eeeeee" : "#111111";
+      const x = border + inner * i * 0.2;
+      const y = border + inner * j * 0.2;
+      ctx.fillRect(x, y, inner * 0.2, inner * 0.2);
+      ctx.closePath();
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#fe6068";
+  const paths = ball.path.paths;
+  let total = 0;
+  for (let i = 0; i < paths.length - 1; i++) {
+    total += paths[i].duration;
+    if (ball.skillTimer >= total) continue;
+    if (i < 2) continue;
+    ctx.beginPath();
+    const starting = (total - ball.skillTimer < paths[i].duration) ? ball.x : paths[i].node;
+    ctx.moveTo(starting.x, starting.y);
+    ctx.lineTo(paths[i + 1].node.x, paths[i + 1].node.y);
+    ctx.stroke();
     ctx.closePath();
   }
 }
