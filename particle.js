@@ -194,7 +194,7 @@ export class Particle extends Movable {
     ctx.save();
     ctx.translate(this.x.x, this.x.y);
     ctx.rotate(angle);
-    constimg = GameImages.arrow;
+    const img = GameImages.arrow;
     const imgSize = this.radius * 5;
     ctx.drawImage(img, -imgSize, -imgSize, 2 * imgSize, 2 * imgSize);
     ctx.restore();
