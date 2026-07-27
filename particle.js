@@ -150,7 +150,7 @@ export class Particle extends Movable {
             if (this.ball === ball) break;
             switch (this.config.effect) {
               case "fire":
-                ball.receiveDamage(2);
+                ball.receiveDamage(3);
                 break;
               case "ice":
                 ball.applyEffect("ice", 1);
@@ -194,9 +194,9 @@ export class Particle extends Movable {
     ctx.save();
     ctx.translate(this.x.x, this.x.y);
     ctx.rotate(angle);
-    const img = GameImages.arrow;
-    const size = this.radius * 5;
-    ctx.drawImage(img, -size, -size, 2 * size, 2 * size);
+    constimg = GameImages.arrow;
+    const imgSize = this.radius * 5;
+    ctx.drawImage(img, -imgSize, -imgSize, 2 * imgSize, 2 * imgSize);
     ctx.restore();
   }
   
@@ -209,7 +209,7 @@ export class Particle extends Movable {
 
     const grad = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
     
-    grad.addColorStop(0, 'rgb(0, 0, 0, 0)'); 
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0)'); 
     grad.addColorStop(1, this.color); 
 
     ctx.strokeStyle = grad;

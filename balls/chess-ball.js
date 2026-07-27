@@ -91,7 +91,7 @@ export class ChessBall extends Ball {
 
   onCollision(ball) {
     if (!this.isSkillActive) return;
-    ball.receiveDamage(5);
+    ball.receiveDamage(3);
   }
 }
 

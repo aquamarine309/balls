@@ -36,8 +36,10 @@ function adjustPosition(a, b) {
 }
 
 function handleCollision(a, b, first) {
-  adjustPosition(a, b);
-  if (!a.canCollide || !b.canCollide) return false;
+  if (!a.canCollide || !b.canCollide) {
+    adjustPosition(a, b);
+      return false;
+  }
   const r = a.x.minus(b.x);
   const dist = r.length;
   const minDist = a.radius + b.radius + 4;

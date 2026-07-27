@@ -6,7 +6,7 @@ export class MageBall extends Ball {
   get color() { return "#ceaef3"; }
   get type() { return "mage"; }
   get name() { return "法师"; }
-  get cd() { return 0.6; }
+  get cd() { return 0.5; }
 
   count = 0;
 
