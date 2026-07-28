@@ -81,7 +81,8 @@ export class Particle extends Movable {
     if (isMagic) {
       if (shortTime) {
         const r = this.ball.radius * 3;
-        const angle = (this.time * 3) % (2 * Math.PI);
+        // 转3/4圈飞出
+        const angle = (this.time * Math.PI) % (2 * Math.PI);
         this.x = this.ball.x.add(new Vector(r * Math.cos(angle), r * Math.sin(angle)));
         this.radius *= Math.pow(1.2, diff);
       } else {
@@ -126,9 +127,9 @@ export class Particle extends Movable {
   
   checkBall() {
     for (const ball of Ball.all) {
-      if (this.x.minus(ball.x).length < ball.radius) {
-        const allowSelf = ["healing", "magicball"];
-        if (!allowSelf.includes(this.type) && ball === this.ball) {
+      if (this.x.minus(ball.x).length < ball.radius + this.radius) {
+        const allowSelf = ["healing"];
+        if (this.time < 0.1 || !allowSelf.includes(this.type) && ball === this.ball) {
           return;
         }
         this.lifeTime = 0;

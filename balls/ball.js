@@ -4,6 +4,7 @@ import { AOE } from "../aoe.js";
 import { Vector } from "../vector.js";
 import { Timer } from "../timer.js";
 import { getOption } from "../options.js";
+import { GlobalRNG } from "../global-rng.js";
 
 const BALL_VELOCITY = 0.8 * inner;
 
@@ -28,7 +29,7 @@ export class Ball extends Movable {
     this.life = config.life || 100;
     this.initialLife = this.life;
     this.radius = config.radius || inner * 0.05;
-    this.cdTimer = 0;
+    this.cdTimer = this.cd * GlobalRNG.random() * 0.2;
     this.skillTimer = -1;
     Ball.all.push(this);
     this.lifeHistory = [];

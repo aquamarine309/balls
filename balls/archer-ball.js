@@ -8,7 +8,8 @@ export class ArcherBall extends Ball {
 
   count = 0;
   get cd() {
-    return 0.4 + Math.pow(0.97, this.count) * (this.count % 2 === 0 ? 1.5 : 0.2);
+    const count = this.count ?? 0;
+    return 0.4 + Math.pow(0.97, count) * (count % 2 === 0 ? 1.5 : 0.2);
   }
 
   onSkill() {
