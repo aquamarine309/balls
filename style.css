@@ -7,6 +7,7 @@
 }
 
 body {
+  width: 100%;
   background-color: #101218;
   color: white;
 }
@@ -15,6 +16,7 @@ body {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 canvas {
@@ -30,6 +32,11 @@ button {
   padding: 5px 14px;
   margin: 0 10px;
   border-radius: 4px;
+  transition-duration: 0.2s;
+}
+
+button:active {
+  background-color: #127a20;
 }
 
 input {
@@ -43,9 +50,10 @@ input {
 }
 
 
-.options {
+.btns {
    display: flex;
    flex-direction: column;
+   width: 100%;
 }
 
 .row {
@@ -55,4 +63,22 @@ input {
 
 hr {
   margin: 10px 0;
+  border-color: #808080;
+}
+
+.options-row {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: center;
+}
+
+.options-btn {
+  flex: 1;
+  padding: 5px 5px;
+}
+
+.options-btn[data-is-on="false"] {
+  border-color: #b84b5f;
+  background-color: #313131;
 }

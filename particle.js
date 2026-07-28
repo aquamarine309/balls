@@ -27,7 +27,7 @@ export class Particle extends Movable {
     super(config);
     this.lifeTime = config.lifeTime ?? Infinity;
     this.maxCollision = config.maxCollision ?? Infinity;
-    this.radius = config.radius ?? inner * 0.01;
+    this.radius = config.radius ?? ball.radius * 0.2;
     this.type = config.type;
     this.ball = ball;
     Particle.all.push(this);
@@ -83,6 +83,7 @@ export class Particle extends Movable {
         const r = this.ball.radius * 3;
         const angle = (this.time * 3) % (2 * Math.PI);
         this.x = this.ball.x.add(new Vector(r * Math.cos(angle), r * Math.sin(angle)));
+        this.radius *= Math.pow(1.2, diff);
       } else {
         const balls = Ball.all.filter(x => x !== this.ball);
         if (balls.length > 0) {
@@ -175,7 +176,7 @@ export class Particle extends Movable {
       case "ice": {
         const range = new AOE({
           center: this.x,
-          radius: inner * 0.3,
+          radius: this.radius * 30,
           lifeTime: 3,
           border: true
         }, this.ball);

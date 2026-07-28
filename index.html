@@ -17,8 +17,8 @@
 <body>
   <div class="game-container">
     <canvas></canvas>
-    <div class="options">
-      <div class="options">
+    <div class="btns">
+      <div class="btns">
         <div id="info"></div>
         <div id="loading">图片正在加载，请稍等</div>
         <div class="row">
@@ -28,8 +28,23 @@
       <hr>
       <h2>设置</h2>
       <div class="options">
-        <div class="row"><input type="checkbox" name="same-ball" id="same-ball"><label for="same-ball">允许相同的球</label></div>
-        <div class="row"><input type="checkbox" name="ball-size" id="ball-size"><label for="ball-size">大小不固定</label></div>
+        <div class="options-row">
+          <button
+            class="options-btn"
+            id="same-ball"
+            data-label="种类可重复"
+          ></button>
+          <button
+            class="options-btn"
+            id="ball-size"
+            data-label="大小不同"
+          ></button>
+          <button
+            class="options-btn"
+            id="ball-info"
+            data-label="显示进度条"
+          ></button>
+        </div>
       </div>
     </div>
   </div>

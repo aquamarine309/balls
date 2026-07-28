@@ -12,6 +12,7 @@ export class ChessBall extends Ball {
   get isInvincible() { return this.isSkillActive; }
   
   path = null;
+  lastDirection = null;
   
   onSkill() {
     this.lastDirection = this.vDirection;

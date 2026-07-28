@@ -2,6 +2,7 @@ import { Ball } from "./ball.js";
 import { GlobalRNG } from "../global-rng.js";
 import { inner } from "../layout.js";
 import { AOE } from "../aoe.js";
+import { Vector } from "../vector.js";
 
 export class TrapBall extends Ball {
   get color() { return "#fe6958"; }

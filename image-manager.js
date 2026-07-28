@@ -4,7 +4,7 @@ export function loadImages(fileNames, callback) {
   const totalCount = fileNames.length;
 
   for (const name of fileNames) {
-    const path = `./${name}.png`;
+    const path = `./images/${name}.png`;
     const img = new Image();
     img.src = path;
     images[name] = img;

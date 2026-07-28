@@ -1,12 +1,9 @@
-import { AOE } from "./aoe.js";
-import { Ball } from "./balls/ball.js";
-import { Particle } from "./particle.js"
-import { ctx, border, inner, size } from "./layout.js";
 import { loadImages } from "./image-manager.js";
-import { init, render, setToSeed } from "./render.js";
+import { init, render } from "./render.js";
+import { initOptions } from "./options.js";
 
+initOptions();
 init();
-
 export const GameImages = loadImages(["arrow"], () => {
   render();
   document.querySelector("#loading").remove();

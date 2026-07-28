@@ -3,6 +3,7 @@ import { inner, ctx } from "../layout.js";
 import { AOE } from "../aoe.js";
 import { Vector } from "../vector.js";
 import { Timer } from "../timer.js";
+import { getOption } from "../options.js";
 
 const BALL_VELOCITY = 0.8 * inner;
 
@@ -203,6 +204,29 @@ export class Ball extends Movable {
   
   draw() {
     super.draw();
+    if (getOption("info") && isFinite(this.cd) && !this.isSkillActive) {
+      const percents = 1 - (1 - this.cdTimer / this.cd) % 1;
+      const lz = this.cdTimer < 0;
+      ctx.strokeStyle = "#444444";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(this.x.x - this.radius, this.x.y - this.radius * 1.5);
+      ctx.lineTo(this.x.x + this.radius, this.x.y - this.radius * 1.5);
+      ctx.stroke();
+      ctx.closePath();
+      if (lz) {
+        ctx.strokeStyle = "#ff7777";
+      } else if (this.velocityMult < 1) {
+        ctx.strokeStyle = "#77aadd";
+      } else {
+        ctx.strokeStyle = "#888888";
+      }
+      ctx.beginPath();
+      ctx.moveTo(this.x.x - this.radius, this.x.y - this.radius * 1.5);
+      ctx.lineTo(this.x.x + this.radius * (2 * percents - 1), this.x.y - this.radius * 1.5);
+      ctx.stroke();
+      ctx.closePath();
+    }
     ctx.font = "25px monospace";
     for (const entry of this.lifeHistory) {
       const alpha = 1 - (this.time - entry.time) / 5;
@@ -217,12 +241,12 @@ export class Ball extends Movable {
   /**@abstract */
   onCollision() {}
   
-  tick(diff) {
+  tick(diff, fixed) {
     if (this.time >= this.lifeTime) {
       this.life = 0;
     }
     if (this.isDead) return;
-    super.tick(diff);
+    super.tick(diff, fixed);
     this.passiveDamageTimer += diff;
     this.handleAOERestrictions();
     if (this.isSkillActive) { 

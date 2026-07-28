@@ -6,6 +6,7 @@ import { AOE } from "./aoe.js";
 import { Balls } from "./balls/balls.js";
 import { GlobalRNG } from "./global-rng.js";
 import { Vector } from "./vector.js";
+import { getOption } from "./options.js";
 
 function drawBorder() {
   ctx.beginPath();
@@ -207,8 +208,8 @@ export function setToSeed(seed) {
 
 export function init() {
   const ballTypes = Balls.slice();
-  const repeatable = document.querySelector("#same-ball").checked;
-  const notFixed = document.querySelector("#ball-size").checked;
+  const repeatable = getOption("sameBall");
+  const notFixed = getOption("ballSize");
   let count = 0;
   do {
     const x = size * GlobalRNG.random();
